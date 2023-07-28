@@ -14,8 +14,7 @@ Features include:
 - Line indicating level at which cognitive ability begins to become impared (according to 2016 Harvard study)
 
 ## Demo
-
-Insert gif or link to demo
+![IMG_9293](https://github.com/SkelaKing/Pico-CO2/assets/104640817/ba601b1c-f63b-4249-a12c-aa14c3a2b810)
 
 
 
