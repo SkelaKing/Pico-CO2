@@ -14,7 +14,8 @@ Features include:
 - Line indicating level at which cognitive ability begins to become impared (according to 2016 Harvard study)
 
 ## Demo
-![IMG_9293](https://github.com/SkelaKing/Pico-CO2/assets/104640817/ba601b1c-f63b-4249-a12c-aa14c3a2b810)
+![IMG_9293](https://github.com/SkelaKing/Pico-CO2/assets/104640817/17b9be63-9912-4e6f-bc4c-ac1fa0df8022)
+
 ![image](https://github.com/SkelaKing/Pico-CO2/assets/104640817/0eaa53b9-7859-4819-a5e8-ba08476ae5f4)
 
 
@@ -25,4 +26,4 @@ Features include:
 
 [MH-Z19B Manual](https://www.winsen-sensor.com/d/files/infrared-gas-sensor/ndir-co2-sensor/mh-z19b-co2-manual(ver1_6).pdf)
 
-[Thingiverse link for case](https://www.thingiverse.com/skelakinghd/designs)
+[Thingiverse link for case](https://www.thingiverse.com/thing:6145103)
