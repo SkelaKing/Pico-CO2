@@ -15,6 +15,7 @@ Features include:
 
 ## Demo
 ![IMG_9293](https://github.com/SkelaKing/Pico-CO2/assets/104640817/ba601b1c-f63b-4249-a12c-aa14c3a2b810)
+![image](https://github.com/SkelaKing/Pico-CO2/assets/104640817/0eaa53b9-7859-4819-a5e8-ba08476ae5f4)
 
 
 
