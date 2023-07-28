@@ -1,0 +1,165 @@
+#MH-Z19B CO2 Monitor with Raspberry Pi Pico - Jack Russo
+import machine
+import time
+from machine import Pin,UART,I2C
+from time import sleep_ms
+from ssd1306 import SSD1306_I2C
+i2c=I2C(0,sda=Pin(16), scl=Pin(17), freq=400000)
+
+#Varriables
+button_pin = Pin(14, Pin.IN, Pin.PULL_DOWN)  # Pin Definition
+button_pressed = False
+start_time = 0
+
+WIDTH = 128
+HEIGHT = 64
+
+OldRange = 4600  
+NewRange = 128  
+
+warmup_time=120
+x=0
+
+# Measure CO2 class with sensor
+class Mhz19b:
+
+    # Begin UART
+    def __init__(self,rx_pin, tx_pin):
+        self.uart = UART(1, baudrate=9600, bits=8, parity=None, stop=1, rx=Pin(rx_pin) ,tx=Pin(tx_pin))
+
+    # measure CO2
+    def measure(self):
+        while True:
+            # send a read command to the sensor
+            self.uart.write(b'\xff\x01\x86\x00\x00\x00\x00\x00\x79')
+
+            # Wait for response
+            time.sleep(1)  # in seconds
+
+            # read and validate the data
+            buf = self.uart.read(9)
+            if self.is_valid(buf):
+                break
+
+            # Display Error and Retry
+            oled.fill(0)
+            print('error while reading MH-Z19B sensor: invalid data')
+            print('retry ...')
+            oled.text("Invalid Readings", 0,0)
+            oled.text("Check Sensor!", 14,30)
+            oled.show()
+            self.uart.read(1) #Read that offsets incase leading signal noise
+            
+
+
+        # make this operation
+        co2 = buf[2] * 256 + buf[3]
+        
+        return [co2]
+
+    # check data returned by the sensor 
+    def is_valid(self, buf):
+        if buf is None or buf[0] != 0xFF or buf[1] != 0x86:
+            return False
+        i = 1
+        checksum = 0x00
+        while i < 8:
+            checksum += buf[i] % 256
+            i += 1
+        checksum = ~checksum & 0xFF
+        checksum += 1
+        return checksum == buf[8]
+    
+#Definitions
+SensorCO2 = Mhz19b(5,4)              # rx_pin= 5 and tx_pin= 4
+oled = SSD1306_I2C(WIDTH,HEIGHT,i2c)
+time.sleep(0.5)
+
+#Warm Up Period 3 minutes
+while x < warmup_time:
+    oled.fill(0)
+    oled.text("Device is",30,0)
+    oled.text("warming up",25,8)
+    oled.text("|              |",0,0)
+    oled.text("|              |",0,8)
+    oled.rect(0, 16, 128, 30,1)
+    oled.fill_rect(0, 16, x, 30,1)
+    time_remaining = str(120-x)
+    oled.text("Time Left:" ,0,48)
+    oled.text(time_remaining, 90,48)
+    oled.text("s" ,115,48)
+    oled.show()
+    time.sleep(1)
+    x+=1
+
+    
+# Main
+while True:
+    #Reading
+    reading = int(sum(SensorCO2.measure())) 
+    print("Reading =", reading)
+    reading_string=str(reading)
+    oled.fill(0)                         # Display on OLED
+    oled.text("Carbon Dioxide",6,0)
+    oled.text(reading_string,28,8)
+    oled.text("PPM",68,8)
+    oled.hline(0, 16, 128, 1)
+    oled.hline(0, 15, 128, 1)
+    oled.vline(17,33,18,1)
+    
+    #Scale Range to 0-128 and convert
+    NewValue = (((reading - 400) * NewRange) / OldRange)
+    NewValue = int(NewValue)
+    #Display Bar
+    oled.rect(0, 32, 128, 20,1)
+    oled.fill_rect(0, 32, NewValue, 20,1)
+    oled.text("Really BAD!",43,54)
+    oled.text("Good",0,54)
+    oled.text("Quality:",0,20)
+    
+    #Give meaning to the ppm
+    if reading < 450:
+        oled.text("Healthy",70,20)  
+    elif 1000>reading>450:
+        oled.text("Mild",70,20)
+    elif 2500>reading>1000:
+        oled.text("Bad",70,20)
+    elif reading >2500:
+        oled.text("HAZARD",70,20)
+    oled.vline(18,33,18,0)   
+    oled.show()
+    
+    
+    
+    
+    #Calibration
+    if button_pin.value() == 1:  # Button is pressed
+        if not button_pressed:
+            button_pressed = True
+            start_time = time.time()
+            oled.fill(0)                  #Display calibration Warning 
+            oled.text("WARNING", 36,0)
+            oled.text("CALIBRATION", 20,8)
+            oled.text("> Place outside", 0,24)
+            oled.text("  for 20 minutes", 0,32)
+            oled.text("> Hold for 7 sec", 0,48)
+            oled.show()
+            time.sleep(4)
+    else:
+        button_pressed = False
+
+    if button_pressed and time.time() - start_time >= 8:
+        print("Button pressed for more than 8 seconds!")
+        SensorCO2.uart.write(b'\xff\x01\x87\x00\x00\x00\x00\x00\x78')        #send UART command for calibration
+        debug = SensorCO2.uart.read(9)
+        print(debug)
+        oled.fill(0)
+        oled.text("Calibrating...",20,0)
+        oled.text("Please Wait",20,24)
+        oled.show()
+        time.sleep(4)
+        oled.fill(0)
+        oled.text("SUCCESSFULLY",20,0)
+        oled.text("CALIBRATED!",24,24)
+        oled.show()
+        time.sleep(3)
